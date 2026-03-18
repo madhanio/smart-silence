@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- iOS Blue when checked -->
+    <item android:color="#007AFF" android:state_checked="true" />
+
+    <!-- iOS Light Grey when unchecked -->
+    <item android:color="#E9E9EB" />
+</selector>
