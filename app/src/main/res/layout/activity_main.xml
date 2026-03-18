@@ -1,0 +1,590 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/ios_system_bg"
+    tools:context=".MainActivity">
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:overScrollMode="never">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <!-- iOS LARGE TITLE -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="32dp"
+                android:layout_marginBottom="20dp"
+                android:fontFamily="sans-serif-medium"
+                android:letterSpacing="-0.03"
+                android:text="Smart Silence"
+                android:textColor="@color/ios_text_primary"
+                android:textSize="34sp" />
+
+            <!-- PREMIUM STATUS CARD -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                app:cardBackgroundColor="@color/ios_card_bg"
+                app:cardCornerRadius="14dp"
+                app:cardElevation="0dp"
+                app:strokeColor="#E5E5EA"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="16dp">
+
+                    <View
+                        android:id="@+id/statusIndicator"
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:background="@drawable/circle_indicator" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tvCurrentStatus"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-medium"
+                            android:letterSpacing="0.08"
+                            android:text="SYSTEM ACTIVE"
+                            android:textAllCaps="true"
+                            android:textColor="@color/ios_text_secondary"
+                            android:textSize="11sp" />
+
+                        <TextView
+                            android:id="@+id/tvNextAction"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:fontFamily="sans-serif"
+                            android:letterSpacing="-0.01"
+                            android:textColor="@color/ios_text_primary"
+                            android:textSize="17sp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- SECTION: AUTOMATION -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:layout_marginStart="16dp"
+                android:fontFamily="sans-serif"
+                android:letterSpacing="0.05"
+                android:text="AUTOMATION"
+                android:textAllCaps="true"
+                android:textColor="@color/ios_text_tertiary"
+                android:textSize="13sp" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                app:cardBackgroundColor="@color/ios_card_bg"
+                app:cardCornerRadius="14dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <RelativeLayout
+                        android:id="@+id/layoutAutomationSwitch"
+                        android:layout_width="match_parent"
+                        android:layout_height="52dp"
+                        android:background="@drawable/ios_row_background"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:paddingEnd="16dp"
+                        android:paddingStart="20dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_centerVertical="true"
+                            android:fontFamily="sans-serif"
+                            android:letterSpacing="-0.02"
+                            android:text="Enable Automation"
+                            android:textColor="@color/ios_text_primary"
+                            android:textSize="17sp" />
+
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:id="@+id/automationSwitch"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentEnd="true"
+                            android:layout_centerVertical="true"
+                            app:thumbIcon="@null"
+                            app:thumbTint="@android:color/white"
+                            app:trackDecorationTint="@android:color/transparent"
+                            app:trackTint="@color/switch_track_selector"
+                            app:useMaterialThemeColors="false" />
+
+                    </RelativeLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="0.5dp"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginEnd="0dp"
+                        android:background="@color/ios_separator" />
+
+                    <LinearLayout
+                        android:id="@+id/layoutSkipToday"
+                        android:layout_width="match_parent"
+                        android:layout_height="52dp"
+                        android:background="@drawable/ios_row_background"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:paddingEnd="16dp"
+                        android:paddingStart="20dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif"
+                            android:letterSpacing="-0.02"
+                            android:text="Skip Today"
+                            android:textColor="@color/ios_red"
+                            android:textSize="17sp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- FOCUS MODE CARD -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                app:cardBackgroundColor="@color/ios_card_bg"
+                app:cardCornerRadius="14dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:id="@+id/layoutFocusMode"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:background="@drawable/ios_row_background"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingEnd="16dp"
+                    android:paddingStart="20dp">
+
+                    <ImageView
+                        android:id="@+id/ivFocusIcon"
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@android:drawable/ic_lock_idle_alarm"
+                        app:tint="@color/ios_blue" />
+
+                    <TextView
+                        android:id="@+id/tvFocusMode"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:layout_weight="1"
+                        android:fontFamily="sans-serif"
+                        android:letterSpacing="-0.02"
+                        android:text="Start Focus Mode"
+                        android:textColor="@color/ios_blue"
+                        android:textSize="17sp" />
+
+                    <ImageView
+                        android:id="@+id/ivFocusChevron"
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:src="@drawable/ic_chevron_right"
+                        app:tint="@color/ios_text_tertiary" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- SECTION: SCHEDULE -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:layout_marginStart="16dp"
+                android:fontFamily="sans-serif"
+                android:letterSpacing="0.05"
+                android:text="SCHEDULE"
+                android:textAllCaps="true"
+                android:textColor="@color/ios_text_tertiary"
+                android:textSize="13sp" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardSchedule"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                app:cardBackgroundColor="@color/ios_card_bg"
+                app:cardCornerRadius="14dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:id="@+id/layoutToggleSchedule"
+                        android:layout_width="match_parent"
+                        android:layout_height="52dp"
+                        android:background="@drawable/ios_row_background"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:paddingEnd="16dp"
+                        android:paddingStart="20dp">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:fontFamily="sans-serif"
+                            android:letterSpacing="-0.02"
+                            android:text="Automation Schedule"
+                            android:textColor="@color/ios_text_primary"
+                            android:textSize="17sp" />
+
+                        <ImageView
+                            android:id="@+id/ivScheduleChevron"
+                            android:layout_width="14dp"
+                            android:layout_height="14dp"
+                            android:src="@drawable/ic_chevron_right"
+                            app:tint="@color/ios_text_tertiary" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/expandableSchedule"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:visibility="gone">
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="0.5dp"
+                            android:layout_marginStart="20dp"
+                            android:layout_marginEnd="0dp"
+                            android:background="@color/ios_separator" />
+
+                        <!-- Morning Start -->
+                        <LinearLayout
+                            android:id="@+id/layoutStartTime"
+                            android:layout_width="match_parent"
+                            android:layout_height="52dp"
+                            android:background="@drawable/ios_row_background"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center_vertical"
+                            android:paddingEnd="16dp"
+                            android:paddingStart="20dp">
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:fontFamily="sans-serif"
+                                android:letterSpacing="-0.02"
+                                android:text="Morning Start"
+                                android:textColor="@color/ios_text_primary"
+                                android:textSize="17sp" />
+
+                            <TextView
+                                android:id="@+id/tvStartTime"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif"
+                                android:letterSpacing="-0.02"
+                                android:text="09:00 AM"
+                                android:textColor="@color/ios_text_secondary"
+                                android:textSize="17sp" />
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="0.5dp"
+                            android:layout_marginStart="20dp"
+                            android:layout_marginEnd="0dp"
+                            android:background="@color/ios_separator" />
+
+                        <!-- LUNCH BREAK -->
+                        <LinearLayout
+                            android:id="@+id/layoutLunchBreak"
+                            android:layout_width="match_parent"
+                            android:layout_height="52dp"
+                            android:background="@drawable/ios_row_background"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center_vertical"
+                            android:paddingEnd="16dp"
+                            android:paddingStart="20dp">
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:fontFamily="sans-serif"
+                                android:letterSpacing="-0.02"
+                                android:text="Lunch Break"
+                                android:textColor="@color/ios_text_primary"
+                                android:textSize="17sp" />
+
+                            <LinearLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal">
+                                <TextView
+                                    android:id="@+id/tvLunchStartTime"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:fontFamily="sans-serif"
+                                    android:letterSpacing="-0.02"
+                                    android:text="12:15 PM"
+                                    android:textColor="@color/ios_text_secondary"
+                                    android:textSize="17sp" />
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:fontFamily="sans-serif"
+                                    android:letterSpacing="-0.02"
+                                    android:text=" – "
+                                    android:textColor="@color/ios_text_secondary"
+                                    android:textSize="17sp" />
+                                <TextView
+                                    android:id="@+id/tvLunchEndTime"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:fontFamily="sans-serif"
+                                    android:letterSpacing="-0.02"
+                                    android:text="01:00 PM"
+                                    android:textColor="@color/ios_text_secondary"
+                                    android:textSize="17sp" />
+                            </LinearLayout>
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="0.5dp"
+                            android:layout_marginStart="20dp"
+                            android:layout_marginEnd="0dp"
+                            android:background="@color/ios_separator" />
+
+                        <!-- College End -->
+                        <LinearLayout
+                            android:id="@+id/layoutEndTime"
+                            android:layout_width="match_parent"
+                            android:layout_height="52dp"
+                            android:background="@drawable/ios_row_background"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center_vertical"
+                            android:paddingEnd="16dp"
+                            android:paddingStart="20dp">
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:fontFamily="sans-serif"
+                                android:letterSpacing="-0.02"
+                                android:text="College End"
+                                android:textColor="@color/ios_text_primary"
+                                android:textSize="17sp" />
+
+                            <TextView
+                                android:id="@+id/tvEndTime"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif"
+                                android:letterSpacing="-0.02"
+                                android:text="04:00 PM"
+                                android:textColor="@color/ios_text_secondary"
+                                android:textSize="17sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:id="@+id/tvFooterNotice"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="0dp"
+                android:fontFamily="sans-serif"
+                android:gravity="center"
+                android:padding="4dp"
+                android:text="Automation runs Monday to Friday only."
+                android:textColor="@color/ios_text_tertiary"
+                android:textSize="12sp" />
+
+            <!-- HIDDEN DEBUG SECTION -->
+            <LinearLayout
+                android:id="@+id/sectionDebug"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="24dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:layout_marginStart="16dp"
+                    android:fontFamily="sans-serif"
+                    android:letterSpacing="0.05"
+                    android:text="DEBUG &amp; MANUAL TEST"
+                    android:textAllCaps="true"
+                    android:textColor="@color/ios_text_tertiary"
+                    android:textSize="13sp" />
+
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="32dp"
+                    app:cardBackgroundColor="@color/ios_card_bg"
+                    app:cardCornerRadius="14dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="0dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <LinearLayout
+                            android:id="@+id/layoutTestSilent"
+                            android:layout_width="match_parent"
+                            android:layout_height="52dp"
+                            android:background="@drawable/ios_row_background"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center_vertical"
+                            android:paddingEnd="16dp"
+                            android:paddingStart="20dp">
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif"
+                                android:letterSpacing="-0.02"
+                                android:text="Force Silent Mode"
+                                android:textColor="@color/ios_blue"
+                                android:textSize="17sp" />
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="0.5dp"
+                            android:layout_marginStart="20dp"
+                            android:background="@color/ios_separator" />
+
+                        <LinearLayout
+                            android:id="@+id/layoutTestNormal"
+                            android:layout_width="match_parent"
+                            android:layout_height="52dp"
+                            android:background="@drawable/ios_row_background"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center_vertical"
+                            android:paddingEnd="16dp"
+                            android:paddingStart="20dp">
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif"
+                                android:letterSpacing="-0.02"
+                                android:text="Restore Normal Mode"
+                                android:textColor="@color/ios_blue"
+                                android:textSize="17sp" />
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="0.5dp"
+                            android:layout_marginStart="20dp"
+                            android:background="@color/ios_separator" />
+
+                        <LinearLayout
+                            android:id="@+id/layoutTestMorningCheck"
+                            android:layout_width="match_parent"
+                            android:layout_height="52dp"
+                            android:background="@drawable/ios_row_background"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center_vertical"
+                            android:paddingEnd="16dp"
+                            android:paddingStart="20dp">
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif"
+                                android:letterSpacing="-0.02"
+                                android:text="Test: Morning Check"
+                                android:textColor="@color/ios_blue"
+                                android:textSize="17sp" />
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="0.5dp"
+                            android:layout_marginStart="20dp"
+                            android:background="@color/ios_separator" />
+
+                        <LinearLayout
+                            android:id="@+id/layoutTestFollowUp"
+                            android:layout_width="match_parent"
+                            android:layout_height="52dp"
+                            android:background="@drawable/ios_row_background"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center_vertical"
+                            android:paddingEnd="16dp"
+                            android:paddingStart="20dp">
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif"
+                                android:letterSpacing="-0.02"
+                                android:text="Test: Follow-up"
+                                android:textColor="@color/ios_blue"
+                                android:textSize="17sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

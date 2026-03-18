@@ -1,0 +1,35 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.ClgAutomation" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:fontFamily">system-ui</item>
+        <item name="android:textColorPrimary">@color/ios_text_primary</item>
+        <item name="android:textColorSecondary">@color/ios_text_secondary</item>
+        <item name="android:dialogTheme">@style/Theme.ClgAutomation.IosDialog</item>
+    </style>
+
+    <!-- THE ONLY STYLE YOU NEED FOR THE TOGGLE -->
+    <style name="Widget.App.iOSSwitch" parent="Widget.Material3.CompoundButton.MaterialSwitch">
+        <item name="android:minWidth">0dp</item>
+        <item name="android:minHeight">0dp</item>
+        <item name="trackDecorationTint">@android:color/transparent</item>
+        <item name="thumbTint">@android:color/white</item>
+        <item name="trackTint">@color/switch_track_selector</item>
+        <item name="useMaterialThemeColors">false</item>
+    </style>
+
+    <style name="DialogAnimation">
+        <item name="android:windowEnterAnimation">@anim/slide_up</item>
+        <item name="android:windowExitAnimation">@android:anim/fade_out</item>
+    </style>
+
+    <style name="Theme.ClgAutomation.IosDialog" parent="Theme.AppCompat.Light.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowFrame">@null</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:backgroundDimAmount">0.4</item>
+    </style>
+
+    <style name="Theme.ClgAutomation" parent="Base.Theme.ClgAutomation" />
+</resources>

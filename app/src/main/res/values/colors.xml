@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- iOS System Colors -->
+    <color name="ios_blue">#007AFF</color>
+    <color name="ios_red">#FF3B30</color>
+    <color name="ios_green">#34C759</color>
+    <color name="ios_purple">#5856D6</color>
+    <color name="ios_toggle_off">#E5E5EA</color>
+    
+    <!-- Backgrounds -->
+    <color name="ios_system_bg">#F2F2F7</color>
+    <color name="ios_card_bg">#FFFFFF</color>
+    <color name="ios_dialog_bg">#F2F2F7</color>
+    <color name="ios_separator">#C6C6C8</color>
+    <color name="ios_pressed_bg">#E5E5EA</color>
+    <color name="ios_stroke">#E5E5EA</color>
+
+    <!-- Specific for Switch -->
+    <color name="ios_switch_track">#34C759</color>
+
+    <!-- Text -->
+    <color name="ios_text_primary">#000000</color>
+    <color name="ios_text_secondary">#636366</color>
+    <color name="ios_text_tertiary">#8E8E93</color>
+
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+</resources>

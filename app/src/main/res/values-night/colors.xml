@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- iOS 16 Dark Mode Palette -->
+    <color name="ios_blue">#0A84FF</color>
+    <color name="ios_red">#FF453A</color>
+    <color name="ios_green">#30D158</color>
+    <color name="ios_purple">#BF5AF2</color>
+    <color name="ios_toggle_off">#38383A</color>
+    
+    <color name="ios_system_bg">#000000</color>
+    <color name="ios_card_bg">#1C1C1E</color>
+    <color name="ios_dialog_bg">#2C2C2E</color>
+    <color name="ios_separator">#38383A</color>
+    <color name="ios_pressed_bg">#2C2C2E</color>
+
+    <color name="ios_text_primary">#FFFFFF</color>
+    <color name="ios_text_secondary">#8E8E93</color>
+    <color name="ios_text_tertiary">#636366</color>
+    <color name="ios_stroke">#38383A</color>
+
+    <color name="black">#FFFFFFFF</color>
+    <color name="white">#FF000000</color>
+</resources>
