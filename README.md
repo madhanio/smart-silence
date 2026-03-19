@@ -149,7 +149,7 @@ Morning Check (8:30 AM)
 
 ## Author
 
-**Madhan**
+**Madhan Adepu**
 Second Year B.Tech — Computer Science (CSD)
 Hyderabad Institute of Technology & Management (HITAM)
 
