@@ -4,8 +4,11 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
+import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
+import android.media.AudioAttributes
+import android.net.Uri
 import android.os.Build
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
@@ -27,7 +30,10 @@ class AlarmReceiver : BroadcastReceiver() {
         if (action != null) {
             when (action) {
                 "ACTION_GO_COLLEGE" -> {
-                    automationPrefs.edit().putBoolean("skipped_today", false).putBoolean("responded_today", true).apply()
+                    automationPrefs.edit()
+                        .putBoolean("skipped_today", false)
+                        .putBoolean("responded_today", true)
+                        .apply()
                     nm.cancel(2001)
                     nm.cancel(2002)
                     Toast.makeText(context, "Automation active for today! 👍", Toast.LENGTH_SHORT).show()
@@ -35,10 +41,11 @@ class AlarmReceiver : BroadcastReceiver() {
                     return
                 }
                 "ACTION_SKIP_COLLEGE" -> {
-                    automationPrefs.edit().putBoolean("skipped_today", true).putBoolean("responded_today", true).apply()
-                    appSettings.edit().putBoolean("automation_enabled", false).apply()
-                    val scheduler = AlarmScheduler(context)
-                    scheduler.cancelAllAlarms()
+                    automationPrefs.edit()
+                        .putBoolean("skipped_today", true)
+                        .putBoolean("responded_today", true)
+                        .apply()
+                    
                     nm.cancel(2001)
                     nm.cancel(2002)
                     soundManager.setNormalMode()
@@ -52,7 +59,10 @@ class AlarmReceiver : BroadcastReceiver() {
         if (mode == null) return
 
         if (mode == "RESET") {
-            automationPrefs.edit().putBoolean("skipped_today", false).putBoolean("responded_today", false).apply()
+            automationPrefs.edit()
+                .putBoolean("skipped_today", false)
+                .putBoolean("responded_today", false)
+                .apply()
             notifyMainActivity(context)
             return
         }
@@ -78,19 +88,13 @@ class AlarmReceiver : BroadcastReceiver() {
         }
 
         if (isAutomationEnabled) {
-
             val isSkipped = automationPrefs.getBoolean("skipped_today", false)
             val hasResponded = automationPrefs.getBoolean("responded_today", false)
 
-            // ⭐ skip ONLY at FIRST silent trigger (start time)
             if (mode == "SILENT" && !hasResponded && !isSkipped) {
-
                 automationPrefs.edit()
                     .putBoolean("skipped_today", true)
                     .apply()
-
-                val scheduler = AlarmScheduler(context)
-                scheduler.cancelAllAlarms()
 
                 Toast.makeText(
                     context,
@@ -102,10 +106,8 @@ class AlarmReceiver : BroadcastReceiver() {
                 return
             }
 
-            if (isWeekday && !isSkipped) {
-
+            if ((isWeekday || isManualTest) && !isSkipped) {
                 when (mode) {
-
                     "SILENT" -> {
                         soundManager.setSilentMode()
                         Toast.makeText(
@@ -114,7 +116,6 @@ class AlarmReceiver : BroadcastReceiver() {
                             Toast.LENGTH_SHORT
                         ).show()
                     }
-
                     "NORMAL" -> {
                         soundManager.setNormalMode()
                         Toast.makeText(
@@ -124,7 +125,6 @@ class AlarmReceiver : BroadcastReceiver() {
                         ).show()
                     }
                 }
-
                 notifyMainActivity(context)
             }
         }
@@ -136,35 +136,58 @@ class AlarmReceiver : BroadcastReceiver() {
     }
 
     private fun showMorningNotification(context: Context, isFollowUp: Boolean) {
-        val channelId = "morning_check"
+        val channelId = "morning_check_custom_sound" // Unique channel ID for custom sound
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        
+        val soundUri = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + context.packageName + "/" + R.raw.notification_sound)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(channelId, "Morning Check", NotificationManager.IMPORTANCE_HIGH)
+            val audioAttributes = AudioAttributes.Builder()
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                .build()
+                
+            val channel = NotificationChannel(channelId, "Morning Check", NotificationManager.IMPORTANCE_HIGH).apply {
+                setSound(soundUri, audioAttributes)
+            }
             nm.createNotificationChannel(channel)
         }
 
-        val messages = if (isFollowUp) {
-            listOf(Triple("Orey! Reply ivvadam marchipoyava? 🤦‍♂️", "Mowa, please choose an option bro.", Pair("Veltunna ✅", "Vellatle ❌")))
+        val options = if (isFollowUp) {
+            listOf(
+                Pair("Em aipoyav? Reply ivvaledu inka.", Pair("Veltunna le ra 🚶‍♂️", "Vellatle 🛑")),
+                Pair("Time aipothundi, thondaraga cheppu. ⏳", Pair("Set chesey ✅", "Vadiley ❌")),
+                Pair("Edho okati select chey, veltunnava ledha? 🤷‍♂️", Pair("Ha ha veltunna 🏃‍♂️", "Ledhu ra 💤")),
+                Pair("Silent mode ON cheyala vodha? Clear ga cheppu. 📱", Pair("Chey ✅", "Vodhu ❌"))
+            )
         } else {
-            listOf(Triple("College ki velthunnava? 🎒", "Today automation start cheyamantava?", Pair("Avunu ✅", "Vellatle ❌")))
+            listOf(
+                Pair("Eroju college ki velthunnava leka intlona? 🤔", Pair("Velthunna 🎒", "Intlone 🛌")),
+                Pair("Time avthundi, inka ready avaledha? ⏰", Pair("Ready ayya 🏃‍♂️", "Eroju bunk ❌")),
+                Pair("Automation start cheyana leka eroju lite aa? ⚙️", Pair("Start chey 👍", "Odhu le ✋")),
+                Pair("Inka levaleda? College velle idea undha sir? 🌅", Pair("Undi 🚶‍♂️", "Ledhu 💤")),
+                Pair("Attendance chusko.. velthunnava ledha eeroju? 📊", Pair("Yes ✅", "No ❌"))
+            )
         }
 
-        val selected = messages.random()
+        val selected = options.random()
+        val title = selected.first
+        val buttons = selected.second
+
         val yesIntent = Intent(context, AlarmReceiver::class.java).apply { action = "ACTION_GO_COLLEGE" }
-        val yesPendingIntent = PendingIntent.getBroadcast(context, 1, yesIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        val yesPendingIntent = PendingIntent.getBroadcast(context, 1001, yesIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
         val noIntent = Intent(context, AlarmReceiver::class.java).apply { action = "ACTION_SKIP_COLLEGE" }
-        val noPendingIntent = PendingIntent.getBroadcast(context, 2, noIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        val noPendingIntent = PendingIntent.getBroadcast(context, 1002, noIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
         val notification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.bell_only)
-            .setContentTitle(selected.first)
-            .setContentText(selected.second)
+            .setContentTitle(title)
+            .setSound(soundUri)
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setAutoCancel(true)
-            .addAction(0, selected.third.first, yesPendingIntent)
-            .addAction(0, selected.third.second, noPendingIntent)
+            .addAction(0, buttons.first, yesPendingIntent)
+            .addAction(0, buttons.second, noPendingIntent)
             .build()
 
         nm.notify(if (isFollowUp) 2002 else 2001, notification)

@@ -1,32 +1,32 @@
 package com.madhan.smartsilence
 
-import android.app.AlarmManager
+import android.Manifest
 import android.app.NotificationManager
-import android.app.PendingIntent
-import android.app.TimePickerDialog
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.SharedPreferences
+import android.content.res.ColorStateList
 import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import android.view.Gravity
 import android.view.HapticFeedbackConstants
-import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.TextSwitcher
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.android.material.materialswitch.MaterialSwitch
+import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -42,8 +42,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvLunchStartTime: TextView
     private lateinit var tvLunchEndTime: TextView
     private lateinit var tvEndTime: TextView
-    private lateinit var tvCurrentStatus: TextView
-    private lateinit var tvNextAction: TextView
+    private lateinit var tsCurrentStatus: TextSwitcher
+    private lateinit var tsNextAction: TextSwitcher
+    private lateinit var statusCard: View
     private lateinit var statusDot: View
     private lateinit var automationSwitch: MaterialSwitch
     private lateinit var expandableSchedule: LinearLayout
@@ -52,8 +53,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvFocusMode: TextView
     private lateinit var ivFocusIcon: ImageView
     private lateinit var ivFocusChevron: ImageView
-
-    private var focusEndTime: String? = null
+    private lateinit var tvSkipToday: TextView
 
     private val statusUpdateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -69,20 +69,33 @@ class MainActivity : AppCompatActivity() {
                 clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
                 addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    decorView.systemUiVisibility =
-                        View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+                    val isNightMode = resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK == android.content.res.Configuration.UI_MODE_NIGHT_YES
+                    var flags = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    if (!isNightMode) {
+                        flags = flags or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+                    }
+                    decorView.systemUiVisibility = flags
                 }
                 statusBarColor = Color.TRANSPARENT
             }
         }
 
         setContentView(R.layout.activity_main)
-        handleFirstLaunchPermissions()
 
         soundManager = SoundManager(this)
         scheduler = AlarmScheduler(this)
         appSettings = getSharedPreferences("AppSettings", Context.MODE_PRIVATE)
         automationPrefs = getSharedPreferences("AutomationPrefs", Context.MODE_PRIVATE)
+
+        // Initialize default values if not present
+        if (!appSettings.contains("start_hour")) {
+            appSettings.edit()
+                .putInt("start_hour", 9).putInt("start_minute", 0)
+                .putInt("lunch_start_hour", 12).putInt("lunch_start_minute", 15)
+                .putInt("lunch_end_hour", 13).putInt("lunch_end_minute", 0)
+                .putInt("end_hour", 16).putInt("end_minute", 0)
+                .apply()
+        }
 
         automationSwitch = findViewById(R.id.automationSwitch)
         val layoutAutomationSwitch = findViewById<View>(R.id.layoutAutomationSwitch)
@@ -95,6 +108,7 @@ class MainActivity : AppCompatActivity() {
         tvFocusMode = findViewById(R.id.tvFocusMode)
         ivFocusIcon = findViewById(R.id.ivFocusIcon)
         ivFocusChevron = findViewById(R.id.ivFocusChevron)
+        tvSkipToday = findViewById(R.id.tvSkipToday)
 
         val layoutStartTime = findViewById<LinearLayout>(R.id.layoutStartTime)
         val layoutLunchBreak = findViewById<LinearLayout>(R.id.layoutLunchBreak)
@@ -105,41 +119,143 @@ class MainActivity : AppCompatActivity() {
         tvLunchEndTime = findViewById(R.id.tvLunchEndTime)
         tvEndTime = findViewById(R.id.tvEndTime)
 
-        tvCurrentStatus = findViewById(R.id.tvCurrentStatus)
-        tvNextAction = findViewById(R.id.tvNextAction)
+        tsCurrentStatus = findViewById(R.id.tsCurrentStatus)
+        tsNextAction = findViewById(R.id.tsNextAction)
+        statusCard = findViewById(R.id.statusCard)
         statusDot = findViewById(R.id.statusIndicator)
 
-        checkPermissions()
         loadAndDisplaySettings()
+        checkFirstLaunchPermissions()
 
         layoutAutomationSwitch.setOnClickListener { automationSwitch.toggle() }
 
         automationSwitch.setOnCheckedChangeListener { view, isChecked ->
             if (isProgrammaticChange) return@setOnCheckedChangeListener
-            view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+            
+            if (isChecked && !hasDNDPermission()) {
+                showPermissionDialog()
+                
+                isProgrammaticChange = true
+                automationSwitch.isChecked = false
+                isProgrammaticChange = false
+                return@setOnCheckedChangeListener
+            }
+            
             updateAutomationState(isChecked)
             updateStatusDisplay()
         }
 
+        layoutSkipToday.setOnClickListener {
+            if (!automationSwitch.isChecked) {
+                Toast.makeText(this, "Enable automation first", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            val isSkipped = automationPrefs.getBoolean("skipped_today", false)
+            if (isSkipped) {
+                automationPrefs.edit().putBoolean("skipped_today", false).apply()
+                Toast.makeText(this, "Automation restored for today", Toast.LENGTH_SHORT).show()
+            } else {
+                automationPrefs.edit().putBoolean("skipped_today", true).apply()
+                Toast.makeText(this, "Automation skipped for today", Toast.LENGTH_SHORT).show()
+            }
+            updateStatusDisplay()
+            loadAndDisplaySettings()
+        }
+
+        layoutFocusMode.setOnClickListener {
+            val isCurrentlyFocus = automationPrefs.getBoolean("manual_focus_active", false)
+            if (isCurrentlyFocus) {
+                soundManager.setNormalMode()
+                automationPrefs.edit().putBoolean("manual_focus_active", false).apply()
+                scheduler.cancelAlarm(108) // Cancel focus end alarm
+                Toast.makeText(this, "Focus Mode Ended", Toast.LENGTH_SHORT).show()
+                updateStatusDisplay()
+                loadAndDisplaySettings()
+            } else {
+                if (hasDNDPermission()) {
+                    showFocusDurationPicker()
+                } else {
+                    requestDNDPermission()
+                }
+            }
+        }
+
+        val mainContentContainer = findViewById<LinearLayout>(R.id.mainContentContainer)
+        mainContentContainer?.layoutTransition?.enableTransitionType(android.animation.LayoutTransition.CHANGING)
+        
+        val scheduleCardInner = findViewById<LinearLayout>(R.id.layoutScheduleCardInner)
+        scheduleCardInner?.layoutTransition?.enableTransitionType(android.animation.LayoutTransition.CHANGING)
+
+        layoutToggleSchedule.setOnClickListener {
+            if (expandableSchedule.visibility == View.VISIBLE) {
+                expandableSchedule.visibility = View.GONE
+                ivScheduleChevron.animate().rotation(0f).setDuration(200).start()
+            } else {
+                expandableSchedule.visibility = View.VISIBLE
+                ivScheduleChevron.animate().rotation(90f).setDuration(200).start()
+            }
+        }
+
         layoutStartTime.setOnClickListener { showTimePicker("start") }
         layoutLunchBreak.setOnClickListener {
-            showTimePicker("lunch_start") { showTimePicker("lunch_end") }
+            showLunchTimePicker()
         }
         layoutEndTime.setOnClickListener { showTimePicker("end") }
+
+        // Debug tools
+        val sectionDebug = findViewById<LinearLayout>(R.id.sectionDebug)
+        findViewById<TextView>(R.id.tvFooterNotice).setOnLongClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+            sectionDebug.visibility = if (sectionDebug.visibility == View.VISIBLE) View.GONE else View.VISIBLE
+            Toast.makeText(this, "Debug tools toggled", Toast.LENGTH_SHORT).show()
+            true
+        }
+
+        findViewById<View>(R.id.layoutTestSilent).setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+            if (hasDNDPermission()) {
+                soundManager.setSilentMode()
+                Toast.makeText(this, "Force Silent Triggered", Toast.LENGTH_SHORT).show()
+            } else requestDNDPermission()
+        }
+        
+        findViewById<View>(R.id.layoutTestNormal).setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+            soundManager.setNormalMode()
+            Toast.makeText(this, "Normal Mode Restored", Toast.LENGTH_SHORT).show()
+        }
+
+        findViewById<View>(R.id.layoutTestMorningCheck).setOnClickListener {
+            val intent = Intent(this, AlarmReceiver::class.java).apply {
+                putExtra("MODE", "MORNING_CHECK")
+                putExtra("IS_MANUAL_TEST", true)
+            }
+            sendBroadcast(intent)
+        }
+
+        findViewById<View>(R.id.layoutTestFollowUp).setOnClickListener {
+            val intent = Intent(this, AlarmReceiver::class.java).apply {
+                putExtra("MODE", "MISSED_CHECK")
+                putExtra("IS_MANUAL_TEST", true)
+            }
+            sendBroadcast(intent)
+        }
     }
 
     override fun onResume() {
         super.onResume()
-        registerReceiver(
-            statusUpdateReceiver,
-            IntentFilter("com.madhan.clgautomation.UPDATE_STATUS")
-        )
+        val filter = IntentFilter("com.madhan.clgautomation.UPDATE_STATUS")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(statusUpdateReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            registerReceiver(statusUpdateReceiver, filter)
+        }
         refreshUIState()
     }
 
     override fun onPause() {
         super.onPause()
-        unregisterReceiver(statusUpdateReceiver)
+        try { unregisterReceiver(statusUpdateReceiver) } catch (e: Exception) {}
     }
 
     private fun refreshUIState() {
@@ -154,19 +270,200 @@ class MainActivity : AppCompatActivity() {
         updateUITime(appSettings.getInt("lunch_start_hour", 12), appSettings.getInt("lunch_start_minute", 15), "lunch_start")
         updateUITime(appSettings.getInt("lunch_end_hour", 13), appSettings.getInt("lunch_end_minute", 0), "lunch_end")
         updateUITime(appSettings.getInt("end_hour", 16), appSettings.getInt("end_minute", 0), "end")
+        
+        val focusActive = automationPrefs.getBoolean("manual_focus_active", false)
+        if (focusActive) {
+            tvFocusMode.text = "End Focus"
+            tvFocusMode.setTextColor(ContextCompat.getColor(this, R.color.ios_red))
+            ivFocusIcon.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ios_red))
+            ivFocusChevron.visibility = View.GONE
+        } else {
+            tvFocusMode.text = "Start Focus Mode"
+            tvFocusMode.setTextColor(ContextCompat.getColor(this, R.color.ios_blue))
+            ivFocusIcon.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ios_blue))
+            ivFocusChevron.visibility = View.VISIBLE
+        }
+        
+        val isSkipped = automationPrefs.getBoolean("skipped_today", false)
+        if (isSkipped) {
+            tvSkipToday.text = "Restore Today"
+            tvSkipToday.setTextColor(ContextCompat.getColor(this, R.color.ios_blue))
+        } else {
+            tvSkipToday.text = "Skip Today"
+            tvSkipToday.setTextColor(ContextCompat.getColor(this, R.color.ios_red))
+        }
+        
         updateStatusDisplay()
     }
 
-    private fun showTimePicker(type: String, onComplete: (() -> Unit)? = null) {
-        val currentHour = appSettings.getInt("${type}_hour", 9)
-        val currentMinute = appSettings.getInt("${type}_minute", 0)
-        TimePickerDialog(this, { _, hour, minute ->
+    private fun showFocusDurationPicker() {
+        val dialog = BottomSheetDialog(this)
+        val view = layoutInflater.inflate(R.layout.bottom_sheet_focus_duration, null)
+
+        view.findViewById<TextView>(R.id.btn30m).setOnClickListener { startFocusMode(30); dialog.dismiss() }
+        view.findViewById<TextView>(R.id.btn1h).setOnClickListener { startFocusMode(60); dialog.dismiss() }
+        view.findViewById<TextView>(R.id.btn2h).setOnClickListener { startFocusMode(120); dialog.dismiss() }
+        view.findViewById<TextView>(R.id.btnCustom).setOnClickListener { showFocusTimePicker(); dialog.dismiss() }
+        view.findViewById<TextView>(R.id.btnCancel).setOnClickListener { dialog.dismiss() }
+
+        dialog.setContentView(view)
+        dialog.behavior.state = BottomSheetBehavior.STATE_EXPANDED
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.show()
+    }
+
+    private fun startFocusMode(minutes: Int) {
+        val now = Calendar.getInstance()
+        now.add(Calendar.MINUTE, minutes)
+        val hour = now.get(Calendar.HOUR_OF_DAY)
+        val minute = now.get(Calendar.MINUTE)
+
+        soundManager.setSilentMode()
+        automationPrefs.edit()
+            .putBoolean("manual_focus_active", true)
+            .putInt("focus_end_hour", hour)
+            .putInt("focus_end_minute", minute)
+            .apply()
+        
+        scheduler.scheduleAlarm(hour, minute, "NORMAL", 108)
+        
+        Toast.makeText(this, "Focus Mode Started until ${formatTime(hour, minute)}", Toast.LENGTH_SHORT).show()
+        updateStatusDisplay()
+        loadAndDisplaySettings()
+    }
+
+    private fun showFocusTimePicker() {
+        val dialog = BottomSheetDialog(this)
+        val view = layoutInflater.inflate(R.layout.bottom_sheet_time_picker, null)
+        
+        val tvTitle = view.findViewById<TextView>(R.id.tvTitle)
+        val timePicker = view.findViewById<android.widget.TimePicker>(R.id.timePicker)
+        
+        val btnCancel = view.findViewById<TextView>(R.id.btnCancel)
+        val btnSave = view.findViewById<TextView>(R.id.btnSave)
+
+        tvTitle.text = "Focus Until..."
+        val now = Calendar.getInstance()
+        timePicker.hour = now.get(Calendar.HOUR_OF_DAY)
+        timePicker.minute = now.get(Calendar.MINUTE)
+
+        btnCancel.setOnClickListener { dialog.dismiss() }
+        btnSave.setOnClickListener {
+            val hour = timePicker.hour
+            val minute = timePicker.minute
+            
+            soundManager.setSilentMode()
+            automationPrefs.edit()
+                .putBoolean("manual_focus_active", true)
+                .putInt("focus_end_hour", hour)
+                .putInt("focus_end_minute", minute)
+                .apply()
+            
+            scheduler.scheduleAlarm(hour, minute, "NORMAL", 108)
+            
+            Toast.makeText(this, "Focus Mode Started until ${formatTime(hour, minute)}", Toast.LENGTH_SHORT).show()
+            updateStatusDisplay()
+            loadAndDisplaySettings()
+            dialog.dismiss()
+        }
+
+        dialog.setContentView(view)
+        dialog.behavior.state = BottomSheetBehavior.STATE_EXPANDED
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.show()
+    }
+
+    private fun showTimePicker(type: String) {
+        val dialog = BottomSheetDialog(this)
+        val view = layoutInflater.inflate(R.layout.bottom_sheet_time_picker, null)
+        
+        val tvTitle = view.findViewById<TextView>(R.id.tvTitle)
+        val timePicker = view.findViewById<android.widget.TimePicker>(R.id.timePicker)
+        val btnCancel = view.findViewById<TextView>(R.id.btnCancel)
+        val btnSave = view.findViewById<TextView>(R.id.btnSave)
+
+        tvTitle.text = when(type) {
+            "start" -> "Morning Start"
+            "end" -> "College End"
+            else -> "Set Time"
+        }
+
+        val currentHour = appSettings.getInt("${type}_hour", getDefaultHour(type))
+        val currentMinute = appSettings.getInt("${type}_minute", getDefaultMinute(type))
+        
+        timePicker.hour = currentHour
+        timePicker.minute = currentMinute
+
+        btnCancel.setOnClickListener { dialog.dismiss() }
+        btnSave.setOnClickListener {
+            val hour = timePicker.hour
+            val minute = timePicker.minute
             appSettings.edit().putInt("${type}_hour", hour).putInt("${type}_minute", minute).apply()
             updateUITime(hour, minute, type)
             if (automationSwitch.isChecked) scheduler.scheduleAutomationAlarms()
             updateStatusDisplay()
-            onComplete?.invoke()
-        }, currentHour, currentMinute, false).show()
+            dialog.dismiss()
+        }
+
+        dialog.setContentView(view)
+        dialog.behavior.state = BottomSheetBehavior.STATE_EXPANDED
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.show()
+    }
+
+    private fun showLunchTimePicker() {
+        val dialog = BottomSheetDialog(this)
+        val view = layoutInflater.inflate(R.layout.bottom_sheet_lunch_picker, null)
+        
+        val timePickerStart = view.findViewById<android.widget.TimePicker>(R.id.timePickerStart)
+        val timePickerEnd = view.findViewById<android.widget.TimePicker>(R.id.timePickerEnd)
+        
+        val btnCancel = view.findViewById<TextView>(R.id.btnCancel)
+        val btnSave = view.findViewById<TextView>(R.id.btnSave)
+
+        timePickerStart.hour = appSettings.getInt("lunch_start_hour", 12)
+        timePickerStart.minute = appSettings.getInt("lunch_start_minute", 15)
+        timePickerEnd.hour = appSettings.getInt("lunch_end_hour", 13)
+        timePickerEnd.minute = appSettings.getInt("lunch_end_minute", 0)
+
+        btnCancel.setOnClickListener { dialog.dismiss() }
+        btnSave.setOnClickListener {
+            appSettings.edit()
+                .putInt("lunch_start_hour", timePickerStart.hour)
+                .putInt("lunch_start_minute", timePickerStart.minute)
+                .putInt("lunch_end_hour", timePickerEnd.hour)
+                .putInt("lunch_end_minute", timePickerEnd.minute)
+                .apply()
+            
+            updateUITime(timePickerStart.hour, timePickerStart.minute, "lunch_start")
+            updateUITime(timePickerEnd.hour, timePickerEnd.minute, "lunch_end")
+            
+            if (automationSwitch.isChecked) scheduler.scheduleAutomationAlarms()
+            updateStatusDisplay()
+            dialog.dismiss()
+        }
+
+        dialog.setContentView(view)
+        dialog.behavior.state = BottomSheetBehavior.STATE_EXPANDED
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.show()
+    }
+
+    private fun getDefaultHour(type: String): Int {
+        return when (type) {
+            "start" -> 9
+            "lunch_start" -> 12
+            "lunch_end" -> 13
+            "end" -> 16
+            else -> 9
+        }
+    }
+
+    private fun getDefaultMinute(type: String): Int {
+        return when (type) {
+            "lunch_start" -> 15
+            else -> 0
+        }
     }
 
     private fun updateUITime(hour: Int, minute: Int, type: String) {
@@ -190,45 +487,151 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "Automation Enabled", Toast.LENGTH_SHORT).show()
         } else {
             scheduler.cancelAllAlarms()
-            soundManager.setNormalMode()
             Toast.makeText(this, "Automation Disabled", Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun updateStatusDisplay() {
         val isEnabled = appSettings.getBoolean("automation_enabled", false)
-        if (!isEnabled) {
-            tvCurrentStatus.text = "AUTOMATION DISABLED"
-            tvNextAction.text = "Turn on to start scheduling"
+        val isSkipped = automationPrefs.getBoolean("skipped_today", false)
+        val isFocusActive = automationPrefs.getBoolean("manual_focus_active", false)
+
+        val currentTime = Calendar.getInstance()
+        val dayOfWeek = currentTime.get(Calendar.DAY_OF_WEEK)
+        val isWeekend = dayOfWeek == Calendar.SATURDAY || dayOfWeek == Calendar.SUNDAY
+
+        if (isFocusActive) {
+            val endH = automationPrefs.getInt("focus_end_hour", 0)
+            val endM = automationPrefs.getInt("focus_end_minute", 0)
+            tsCurrentStatus.setText("FOCUS MODE ACTIVE")
+            tsNextAction.setText("Ending at ${formatTime(endH, endM)}")
+            statusDot.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#5856D6"))
+            statusCard.setBackgroundResource(R.drawable.status_card_silent)
             return
         }
-        tvCurrentStatus.text = "SYSTEM ACTIVE"
-        tvNextAction.text = "Automation running"
-    }
 
-    private fun checkPermissions() {
-        val notificationManager =
-            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        if (isWeekend) {
+            tsCurrentStatus.setText("SYSTEM IDLE")
+            tsNextAction.setText("Enjoy your weekend! 🌴")
+            statusDot.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#34C759"))
+            statusCard.setBackgroundResource(R.drawable.status_card_normal)
+            return
+        }
 
-        if (!notificationManager.isNotificationPolicyAccessGranted) {
-            startActivity(Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
+        if (!isEnabled) {
+            tsCurrentStatus.setText("AUTOMATION DISABLED")
+            tsNextAction.setText("Turn on to start scheduling")
+            statusDot.backgroundTintList = ColorStateList.valueOf(Color.GRAY)
+            statusCard.setBackgroundResource(R.drawable.status_card_normal)
+            return
+        }
+
+        if (isSkipped) {
+            tsCurrentStatus.setText("SKIPPED FOR TODAY")
+            tsNextAction.setText("Automation will resume tomorrow")
+            statusDot.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#FF9500"))
+            statusCard.setBackgroundResource(R.drawable.status_card_normal)
+            return
+        }
+
+        val currentHour = currentTime.get(Calendar.HOUR_OF_DAY)
+        val currentMinute = currentTime.get(Calendar.MINUTE)
+
+        val startHour = appSettings.getInt("start_hour", 9)
+        val startMinute = appSettings.getInt("start_minute", 0)
+        val lunchStartHour = appSettings.getInt("lunch_start_hour", 12)
+        val lunchStartMinute = appSettings.getInt("lunch_start_minute", 15)
+        val lunchEndHour = appSettings.getInt("lunch_end_hour", 13)
+        val lunchEndMinute = appSettings.getInt("lunch_end_minute", 0)
+        val endHour = appSettings.getInt("end_hour", 16)
+        val endMinute = appSettings.getInt("end_minute", 0)
+
+        val now = currentHour * 60 + currentMinute
+        val start = startHour * 60 + startMinute
+        val lunchStart = lunchStartHour * 60 + lunchStartMinute
+        val lunchEnd = lunchEndHour * 60 + lunchEndMinute
+        val end = endHour * 60 + endMinute
+
+        when {
+            now < start -> {
+                tsCurrentStatus.setText("SYSTEM ACTIVE")
+                tsNextAction.setText("Next: Silent at ${formatTime(startHour, startMinute)}")
+                statusDot.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#34C759"))
+                statusCard.setBackgroundResource(R.drawable.status_card_normal)
+            }
+            now >= start && now < lunchStart -> {
+                tsCurrentStatus.setText("SILENT MODE ACTIVE")
+                tsNextAction.setText("Next: Normal at ${formatTime(lunchStartHour, lunchStartMinute)}")
+                statusDot.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#FF3B30"))
+                statusCard.setBackgroundResource(R.drawable.status_card_silent)
+            }
+            now >= lunchStart && now < lunchEnd -> {
+                tsCurrentStatus.setText("NORMAL MODE ACTIVE")
+                tsNextAction.setText("Next: Silent at ${formatTime(lunchEndHour, lunchEndMinute)}")
+                statusDot.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#34C759"))
+                statusCard.setBackgroundResource(R.drawable.status_card_normal)
+            }
+            now >= lunchEnd && now < end -> {
+                tsCurrentStatus.setText("SILENT MODE ACTIVE")
+                tsNextAction.setText("Next: Normal at ${formatTime(endHour, endMinute)}")
+                statusDot.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#FF3B30"))
+                statusCard.setBackgroundResource(R.drawable.status_card_silent)
+            }
+            else -> {
+                tsCurrentStatus.setText("SYSTEM ACTIVE")
+                tsNextAction.setText("Schedule ended for today")
+                statusDot.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#34C759"))
+                statusCard.setBackgroundResource(R.drawable.status_card_normal)
+            }
         }
     }
 
-    private fun handleFirstLaunchPermissions() {
-        val prefs = getSharedPreferences("FirstLaunch", Context.MODE_PRIVATE)
-        val isFirstLaunch = prefs.getBoolean("is_first_launch", true)
-        if (!isFirstLaunch) return
-        prefs.edit().putBoolean("is_first_launch", false).apply()
-        requestAllRequiredPermissions()
+    private fun formatTime(hour: Int, minute: Int): String {
+        val calendar = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, hour)
+            set(Calendar.MINUTE, minute)
+        }
+        return SimpleDateFormat("hh:mm a", Locale.US).format(calendar.time)
     }
 
-    private fun requestAllRequiredPermissions() {
-        val notificationManager =
-            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    private fun hasDNDPermission(): Boolean {
+        val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        return nm.isNotificationPolicyAccessGranted
+    }
 
-        if (!notificationManager.isNotificationPolicyAccessGranted) {
-            startActivity(Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
+    private fun requestDNDPermission() {
+        startActivity(Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
+        Toast.makeText(this, "Please grant Do Not Disturb access", Toast.LENGTH_LONG).show()
+    }
+
+    private fun checkFirstLaunchPermissions() {
+        val isFirstLaunch = appSettings.getBoolean("is_first_launch", true)
+        if (isFirstLaunch) {
+            showPermissionDialog()
+            appSettings.edit().putBoolean("is_first_launch", false).apply()
         }
+    }
+
+    private fun showPermissionDialog() {
+        val dialog = AlertDialog.Builder(this).create()
+        val view = layoutInflater.inflate(R.layout.dialog_ios_alert, null)
+        
+        view.findViewById<TextView>(R.id.tvAlertTitle).text = "Permissions Required"
+        view.findViewById<TextView>(R.id.tvAlertMessage).text = "To silence your phone automatically, Smart Silence needs 'Do Not Disturb' access and 'Notification' permissions."
+        
+        view.findViewById<TextView>(R.id.btnAlertPositive).setOnClickListener {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 101)
+            }
+            if (!hasDNDPermission()) {
+                requestDNDPermission()
+            }
+            dialog.dismiss()
+        }
+        
+        dialog.setView(view)
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.setCancelable(false)
+        dialog.show()
     }
 }

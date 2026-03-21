@@ -14,8 +14,10 @@
         android:overScrollMode="never">
 
         <LinearLayout
+            android:id="@+id/mainContentContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:animateLayoutChanges="true"
             android:orientation="vertical"
             android:padding="20dp">
 
@@ -33,6 +35,7 @@
 
             <!-- PREMIUM STATUS CARD -->
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/statusCard"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="24dp"
@@ -62,26 +65,49 @@
                         android:layout_weight="1"
                         android:orientation="vertical">
 
-                        <TextView
-                            android:id="@+id/tvCurrentStatus"
+                        <TextSwitcher
+                            android:id="@+id/tsCurrentStatus"
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:fontFamily="sans-serif-medium"
-                            android:letterSpacing="0.08"
-                            android:text="SYSTEM ACTIVE"
-                            android:textAllCaps="true"
-                            android:textColor="@color/ios_text_secondary"
-                            android:textSize="11sp" />
+                            android:layout_height="wrap_content">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif-medium"
+                                android:letterSpacing="0.08"
+                                android:text="SYSTEM ACTIVE"
+                                android:textAllCaps="true"
+                                android:textColor="@color/ios_text_secondary"
+                                android:textSize="11sp" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif-medium"
+                                android:letterSpacing="0.08"
+                                android:textAllCaps="true"
+                                android:textColor="@color/ios_text_secondary"
+                                android:textSize="11sp" />
+                        </TextSwitcher>
 
-                        <TextView
-                            android:id="@+id/tvNextAction"
+                        <TextSwitcher
+                            android:id="@+id/tsNextAction"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:fontFamily="sans-serif"
-                            android:letterSpacing="-0.01"
-                            android:textColor="@color/ios_text_primary"
-                            android:textSize="17sp" />
+                            android:layout_marginTop="2dp">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif"
+                                android:letterSpacing="-0.01"
+                                android:textColor="@color/ios_text_primary"
+                                android:textSize="17sp" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif"
+                                android:letterSpacing="-0.01"
+                                android:textColor="@color/ios_text_primary"
+                                android:textSize="17sp" />
+                        </TextSwitcher>
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -150,8 +176,6 @@
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="0.5dp"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginEnd="0dp"
                         android:background="@color/ios_separator" />
 
                     <LinearLayout
@@ -166,6 +190,7 @@
                         android:paddingStart="20dp">
 
                         <TextView
+                            android:id="@+id/tvSkipToday"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:fontFamily="sans-serif"
@@ -251,6 +276,7 @@
                 app:strokeWidth="0dp">
 
                 <LinearLayout
+                    android:id="@+id/layoutScheduleCardInner"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
@@ -294,8 +320,6 @@
                         <View
                             android:layout_width="match_parent"
                             android:layout_height="0.5dp"
-                            android:layout_marginStart="20dp"
-                            android:layout_marginEnd="0dp"
                             android:background="@color/ios_separator" />
 
                         <!-- Morning Start -->
@@ -334,8 +358,6 @@
                         <View
                             android:layout_width="match_parent"
                             android:layout_height="0.5dp"
-                            android:layout_marginStart="20dp"
-                            android:layout_marginEnd="0dp"
                             android:background="@color/ios_separator" />
 
                         <!-- LUNCH BREAK -->
@@ -396,8 +418,6 @@
                         <View
                             android:layout_width="match_parent"
                             android:layout_height="0.5dp"
-                            android:layout_marginStart="20dp"
-                            android:layout_marginEnd="0dp"
                             android:background="@color/ios_separator" />
 
                         <!-- College End -->
@@ -506,7 +526,6 @@
                         <View
                             android:layout_width="match_parent"
                             android:layout_height="0.5dp"
-                            android:layout_marginStart="20dp"
                             android:background="@color/ios_separator" />
 
                         <LinearLayout
@@ -532,7 +551,6 @@
                         <View
                             android:layout_width="match_parent"
                             android:layout_height="0.5dp"
-                            android:layout_marginStart="20dp"
                             android:background="@color/ios_separator" />
 
                         <LinearLayout
@@ -558,7 +576,6 @@
                         <View
                             android:layout_width="match_parent"
                             android:layout_height="0.5dp"
-                            android:layout_marginStart="20dp"
                             android:background="@color/ios_separator" />
 
                         <LinearLayout

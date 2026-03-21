@@ -30,7 +30,7 @@
 
         <receiver
             android:name=".AlarmReceiver"
-            android:exported="false" />
+            android:exported="true" />
 
         <receiver
             android:name=".BootReceiver"

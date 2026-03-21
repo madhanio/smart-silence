@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bottom_sheet_bg"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <View
+        android:layout_width="36dp"
+        android:layout_height="5dp"
+        android:layout_gravity="center"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="12dp"
+        android:background="@drawable/ios_handle" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginBottom="20dp"
+        android:fontFamily="sans-serif-medium"
+        android:text="Select Focus Duration"
+        android:textColor="@color/ios_text_primary"
+        android:textSize="17sp" />
+
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardBackgroundColor="@color/ios_card_bg"
+        app:cardCornerRadius="14dp"
+        app:cardElevation="0dp"
+        app:strokeWidth="0dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/btn30m"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:background="@drawable/ios_row_background"
+                android:gravity="center_vertical"
+                android:paddingStart="20dp"
+                android:text="30 Minutes"
+                android:textColor="@color/ios_blue"
+                android:textSize="17sp" />
+
+            <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="@color/ios_separator" />
+
+            <TextView
+                android:id="@+id/btn1h"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:background="@drawable/ios_row_background"
+                android:gravity="center_vertical"
+                android:paddingStart="20dp"
+                android:text="1 Hour"
+                android:textColor="@color/ios_blue"
+                android:textSize="17sp" />
+
+            <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="@color/ios_separator" />
+
+            <TextView
+                android:id="@+id/btn2h"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:background="@drawable/ios_row_background"
+                android:gravity="center_vertical"
+                android:paddingStart="20dp"
+                android:text="2 Hours"
+                android:textColor="@color/ios_blue"
+                android:textSize="17sp" />
+
+            <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="@color/ios_separator" />
+
+            <TextView
+                android:id="@+id/btnCustom"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:background="@drawable/ios_row_background"
+                android:gravity="center_vertical"
+                android:paddingStart="20dp"
+                android:text="Custom Time..."
+                android:textColor="@color/ios_blue"
+                android:textSize="17sp" />
+
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <TextView
+        android:id="@+id/btnCancel"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/ios_row_background"
+        android:gravity="center"
+        android:fontFamily="sans-serif-medium"
+        android:text="Cancel"
+        android:textColor="@color/ios_blue"
+        android:textSize="17sp" />
+
+</LinearLayout>

@@ -36,7 +36,6 @@ class AlarmScheduler(private val context: Context) {
             set(Calendar.MILLISECOND, 0)
         }
 
-// ⭐ Morning notification = start - 30 mins
         val notifyCal = startCal.clone() as Calendar
         notifyCal.add(Calendar.MINUTE, -30)
 
@@ -47,7 +46,6 @@ class AlarmScheduler(private val context: Context) {
             105
         )
 
-// ⭐ Follow-up = start - 15 mins
         val followCal = startCal.clone() as Calendar
         followCal.add(Calendar.MINUTE, -15)
 
@@ -75,7 +73,7 @@ class AlarmScheduler(private val context: Context) {
         scheduleAlarm(0, 0, "RESET", 106)
     }
 
-    private fun scheduleAlarm(hour: Int, minute: Int, mode: String, requestCode: Int) {
+    fun scheduleAlarm(hour: Int, minute: Int, mode: String, requestCode: Int) {
         val calendar = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, hour)
             set(Calendar.MINUTE, minute)
@@ -108,14 +106,18 @@ class AlarmScheduler(private val context: Context) {
         }
     }
 
-    fun cancelAllAlarms() {
+    fun cancelAlarm(requestCode: Int) {
         val intent = Intent(context, AlarmReceiver::class.java)
-        val ids = intArrayOf(101, 102, 103, 104, 105, 106, 107)
+        val pendingIntent = PendingIntent.getBroadcast(
+            context, requestCode, intent, PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+        )
+        pendingIntent?.let { alarmManager.cancel(it) }
+    }
+
+    fun cancelAllAlarms() {
+        val ids = intArrayOf(101, 102, 103, 104, 105, 106, 107, 108)
         for (code in ids) {
-            val pendingIntent = PendingIntent.getBroadcast(
-                context, code, intent, PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
-            )
-            pendingIntent?.let { alarmManager.cancel(it) }
+            cancelAlarm(code)
         }
     }
 }
