@@ -7,6 +7,7 @@
 ## 🚀 Quick Overview
 
 Motivation: Built to solve classroom disruptions caused by unsilenced phones.
+
 Smart Silence is an Android automation app that automatically silences notification sounds during college hours based on a customizable schedule.
 
 ---
