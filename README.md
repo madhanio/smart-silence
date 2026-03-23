@@ -64,7 +64,7 @@ App Launch
                     ├── Lunch Break Time  → Set notification sound: NORMAL
                     └── College End Time  → Automation cycle complete
 
-Morning Check (8:30 AM)
+Morning Check
     └── Send confirmation notification
             ├── User confirms attending → Automation proceeds
             ├── User skips today       → Skip Today logic activates (current day only)
@@ -150,7 +150,7 @@ Morning Check (8:30 AM)
 
 ## Author
 
-**Madhan**
+**Madhan Adepu**
 Second Year B.Tech — Computer Science (CSD)
 Hyderabad Institute of Technology & Management (HITAM)
 
