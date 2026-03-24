@@ -27,6 +27,10 @@ class AlarmReceiver : BroadcastReceiver() {
         val isAutomationEnabled = appSettings.getBoolean("automation_enabled", false)
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
+        if (isAutomationEnabled && action == null && mode != null) {
+            AlarmScheduler(context).scheduleAutomationAlarms()
+        }
+
         if (action != null) {
             when (action) {
                 "ACTION_GO_COLLEGE" -> {
@@ -91,24 +95,26 @@ class AlarmReceiver : BroadcastReceiver() {
             val isSkipped = automationPrefs.getBoolean("skipped_today", false)
             val hasResponded = automationPrefs.getBoolean("responded_today", false)
 
-            if (mode == "SILENT" && !hasResponded && !isSkipped) {
-                automationPrefs.edit()
-                    .putBoolean("skipped_today", true)
-                    .apply()
+            if (mode == "MORNING_SILENT" && !hasResponded && !isSkipped) {
+                if (isWeekday || isManualTest) {
+                    automationPrefs.edit()
+                        .putBoolean("skipped_today", true)
+                        .apply()
 
-                Toast.makeText(
-                    context,
-                    "No response. Automation skipped for today.",
-                    Toast.LENGTH_LONG
-                ).show()
+                    Toast.makeText(
+                        context,
+                        "No response. Automation skipped for today.",
+                        Toast.LENGTH_LONG
+                    ).show()
 
-                notifyMainActivity(context)
+                    notifyMainActivity(context)
+                }
                 return
             }
 
             if ((isWeekday || isManualTest) && !isSkipped) {
                 when (mode) {
-                    "SILENT" -> {
+                    "MORNING_SILENT", "SILENT" -> {
                         soundManager.setSilentMode()
                         Toast.makeText(
                             context,

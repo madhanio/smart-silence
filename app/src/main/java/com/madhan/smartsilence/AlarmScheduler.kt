@@ -56,7 +56,7 @@ class AlarmScheduler(private val context: Context) {
             107
         )
 
-        scheduleAlarm(startH, startM, "SILENT", 101)
+        scheduleAlarm(startH, startM, "MORNING_SILENT", 101)
 
         val lStartH = appPrefs.getInt("lunch_start_hour", 12)
         val lStartM = appPrefs.getInt("lunch_start_minute", 15)

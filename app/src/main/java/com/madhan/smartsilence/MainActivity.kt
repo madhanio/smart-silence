@@ -1,6 +1,8 @@
 package com.madhan.smartsilence
 
 import android.Manifest
+import android.animation.ArgbEvaluator
+import android.animation.ValueAnimator
 import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -11,7 +13,9 @@ import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.os.PowerManager
 import android.provider.Settings
+import android.net.Uri
 import android.view.HapticFeedbackConstants
 import android.view.View
 import android.view.WindowManager
@@ -37,6 +41,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var appSettings: SharedPreferences
     private lateinit var automationPrefs: SharedPreferences
     private var isProgrammaticChange = false
+    private var lastStatusColor = Color.parseColor("#34C759")
 
     private lateinit var tvStartTime: TextView
     private lateinit var tvLunchStartTime: TextView
@@ -126,6 +131,7 @@ class MainActivity : AppCompatActivity() {
 
         loadAndDisplaySettings()
         checkFirstLaunchPermissions()
+        checkBatteryOptimizations()
 
         layoutAutomationSwitch.setOnClickListener { automationSwitch.toggle() }
 
@@ -150,6 +156,21 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, "Enable automation first", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
+
+            val currentTime = Calendar.getInstance()
+            val currentHour = currentTime.get(Calendar.HOUR_OF_DAY)
+            val currentMinute = currentTime.get(Calendar.MINUTE)
+            val endHour = appSettings.getInt("end_hour", 16)
+            val endMinute = appSettings.getInt("end_minute", 0)
+
+            val now = currentHour * 60 + currentMinute
+            val end = endHour * 60 + endMinute
+
+            if (now >= end) {
+                Toast.makeText(this, "Today's schedule is already finished", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
             val isSkipped = automationPrefs.getBoolean("skipped_today", false)
             if (isSkipped) {
                 automationPrefs.edit().putBoolean("skipped_today", false).apply()
@@ -244,7 +265,11 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        val filter = IntentFilter("com.madhan.clgautomation.UPDATE_STATUS")
+        val filter = IntentFilter().apply {
+            addAction("com.madhan.clgautomation.UPDATE_STATUS")
+            addAction(Intent.ACTION_TIME_TICK)
+        }
+        
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(statusUpdateReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
         } else {
@@ -500,90 +525,103 @@ class MainActivity : AppCompatActivity() {
         val dayOfWeek = currentTime.get(Calendar.DAY_OF_WEEK)
         val isWeekend = dayOfWeek == Calendar.SATURDAY || dayOfWeek == Calendar.SUNDAY
 
-        if (isFocusActive) {
-            val endH = automationPrefs.getInt("focus_end_hour", 0)
-            val endM = automationPrefs.getInt("focus_end_minute", 0)
-            tsCurrentStatus.setText("FOCUS MODE ACTIVE")
-            tsNextAction.setText("Ending at ${formatTime(endH, endM)}")
-            statusDot.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#5856D6"))
-            statusCard.setBackgroundResource(R.drawable.status_card_silent)
-            return
-        }
-
-        if (isWeekend) {
-            tsCurrentStatus.setText("SYSTEM IDLE")
-            tsNextAction.setText("Enjoy your weekend! 🌴")
-            statusDot.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#34C759"))
-            statusCard.setBackgroundResource(R.drawable.status_card_normal)
-            return
-        }
-
-        if (!isEnabled) {
-            tsCurrentStatus.setText("AUTOMATION DISABLED")
-            tsNextAction.setText("Turn on to start scheduling")
-            statusDot.backgroundTintList = ColorStateList.valueOf(Color.GRAY)
-            statusCard.setBackgroundResource(R.drawable.status_card_normal)
-            return
-        }
-
-        if (isSkipped) {
-            tsCurrentStatus.setText("SKIPPED FOR TODAY")
-            tsNextAction.setText("Automation will resume tomorrow")
-            statusDot.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#FF9500"))
-            statusCard.setBackgroundResource(R.drawable.status_card_normal)
-            return
-        }
-
         val currentHour = currentTime.get(Calendar.HOUR_OF_DAY)
         val currentMinute = currentTime.get(Calendar.MINUTE)
+        val now = currentHour * 60 + currentMinute
 
+        // Fetch settings for end time comparison
         val startHour = appSettings.getInt("start_hour", 9)
         val startMinute = appSettings.getInt("start_minute", 0)
-        val lunchStartHour = appSettings.getInt("lunch_start_hour", 12)
-        val lunchStartMinute = appSettings.getInt("lunch_start_minute", 15)
-        val lunchEndHour = appSettings.getInt("lunch_end_hour", 13)
-        val lunchEndMinute = appSettings.getInt("lunch_end_minute", 0)
         val endHour = appSettings.getInt("end_hour", 16)
         val endMinute = appSettings.getInt("end_minute", 0)
-
-        val now = currentHour * 60 + currentMinute
-        val start = startHour * 60 + startMinute
-        val lunchStart = lunchStartHour * 60 + lunchStartMinute
-        val lunchEnd = lunchEndHour * 60 + lunchEndMinute
         val end = endHour * 60 + endMinute
 
+        var targetColor = Color.parseColor("#34C759") // Default Green
+        var statusLabel = ""
+        var actionLabel = ""
+
         when {
-            now < start -> {
-                tsCurrentStatus.setText("SYSTEM ACTIVE")
-                tsNextAction.setText("Next: Silent at ${formatTime(startHour, startMinute)}")
-                statusDot.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#34C759"))
-                statusCard.setBackgroundResource(R.drawable.status_card_normal)
+            isFocusActive -> {
+                val fEndH = automationPrefs.getInt("focus_end_hour", 0)
+                val fEndM = automationPrefs.getInt("focus_end_minute", 0)
+                statusLabel = "FOCUS MODE ACTIVE"
+                actionLabel = "Ending at ${formatTime(fEndH, fEndM)}"
+                targetColor = Color.parseColor("#5856D6")
             }
-            now >= start && now < lunchStart -> {
-                tsCurrentStatus.setText("SILENT MODE ACTIVE")
-                tsNextAction.setText("Next: Normal at ${formatTime(lunchStartHour, lunchStartMinute)}")
-                statusDot.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#FF3B30"))
-                statusCard.setBackgroundResource(R.drawable.status_card_silent)
+            isWeekend -> {
+                statusLabel = "SYSTEM IDLE"
+                actionLabel = "Enjoy your weekend! 🌴"
+                targetColor = Color.parseColor("#34C759")
             }
-            now >= lunchStart && now < lunchEnd -> {
-                tsCurrentStatus.setText("NORMAL MODE ACTIVE")
-                tsNextAction.setText("Next: Silent at ${formatTime(lunchEndHour, lunchEndMinute)}")
-                statusDot.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#34C759"))
-                statusCard.setBackgroundResource(R.drawable.status_card_normal)
+            !isEnabled -> {
+                statusLabel = "AUTOMATION DISABLED"
+                actionLabel = "Turn on to start scheduling"
+                targetColor = Color.GRAY
             }
-            now >= lunchEnd && now < end -> {
-                tsCurrentStatus.setText("SILENT MODE ACTIVE")
-                tsNextAction.setText("Next: Normal at ${formatTime(endHour, endMinute)}")
-                statusDot.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#FF3B30"))
-                statusCard.setBackgroundResource(R.drawable.status_card_silent)
+            now >= end -> {
+                statusLabel = "SYSTEM ACTIVE"
+                actionLabel = "Schedule ended for today"
+                targetColor = Color.parseColor("#34C759")
+            }
+            isSkipped -> {
+                statusLabel = "SKIPPED FOR TODAY"
+                actionLabel = "Automation will resume tomorrow"
+                targetColor = Color.parseColor("#FF9500")
             }
             else -> {
-                tsCurrentStatus.setText("SYSTEM ACTIVE")
-                tsNextAction.setText("Schedule ended for today")
-                statusDot.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#34C759"))
-                statusCard.setBackgroundResource(R.drawable.status_card_normal)
+                val start = startHour * 60 + startMinute
+                val lunchStartHour = appSettings.getInt("lunch_start_hour", 12)
+                val lunchStartMinute = appSettings.getInt("lunch_start_minute", 15)
+                val lunchEndHour = appSettings.getInt("lunch_end_hour", 13)
+                val lunchEndMinute = appSettings.getInt("lunch_end_minute", 0)
+                
+                val lunchStart = lunchStartHour * 60 + lunchStartMinute
+                val lunchEnd = lunchEndHour * 60 + lunchEndMinute
+
+                when {
+                    now < start -> {
+                        statusLabel = "SYSTEM ACTIVE"
+                        actionLabel = "Next: Silent at ${formatTime(startHour, startMinute)}"
+                        targetColor = Color.parseColor("#34C759")
+                    }
+                    now >= start && now < lunchStart -> {
+                        statusLabel = "SILENT MODE ACTIVE"
+                        actionLabel = "Next: Normal at ${formatTime(lunchStartHour, lunchStartMinute)}"
+                        targetColor = Color.parseColor("#FF3B30")
+                    }
+                    now >= lunchStart && now < lunchEnd -> {
+                        statusLabel = "NORMAL MODE ACTIVE"
+                        actionLabel = "Next: Silent at ${formatTime(lunchEndHour, lunchEndMinute)}"
+                        targetColor = Color.parseColor("#34C759")
+                    }
+                    now >= lunchEnd && now < end -> {
+                        statusLabel = "SILENT MODE ACTIVE"
+                        actionLabel = "Next: Normal at ${formatTime(endHour, endMinute)}"
+                        targetColor = Color.parseColor("#FF3B30")
+                    }
+                }
             }
         }
+
+        tsCurrentStatus.setText(statusLabel)
+        tsNextAction.setText(actionLabel)
+        animateStatusUI(targetColor)
+    }
+
+    private fun animateStatusUI(targetColor: Int) {
+        val colorAnim = ValueAnimator.ofObject(ArgbEvaluator(), lastStatusColor, targetColor)
+        colorAnim.duration = 300
+        colorAnim.addUpdateListener { animator ->
+            val color = animator.animatedValue as Int
+            statusDot.backgroundTintList = ColorStateList.valueOf(color)
+            (statusCard as? com.google.android.material.card.MaterialCardView)?.let {
+                it.strokeColor = color
+                // Apply a very subtle translucent version of the color to the background
+                // but keep it mostly iOS card background
+            }
+        }
+        colorAnim.start()
+        lastStatusColor = targetColor
     }
 
     private fun formatTime(hour: Int, minute: Int): String {
@@ -632,6 +670,39 @@ class MainActivity : AppCompatActivity() {
         dialog.setView(view)
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
         dialog.setCancelable(false)
+        dialog.show()
+    }
+
+    private fun checkBatteryOptimizations() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+            if (!pm.isIgnoringBatteryOptimizations(packageName)) {
+                showBatteryOptimizationDialog()
+            }
+        }
+    }
+
+    private fun showBatteryOptimizationDialog() {
+        val dialog = AlertDialog.Builder(this).create()
+        val view = layoutInflater.inflate(R.layout.dialog_ios_alert, null)
+        
+        view.findViewById<TextView>(R.id.tvAlertTitle).text = "Battery Optimization"
+        view.findViewById<TextView>(R.id.tvAlertMessage).text = "To ensure alarms trigger exactly on time, please disable battery optimization for Smart Silence."
+        
+        view.findViewById<TextView>(R.id.btnAlertPositive).setOnClickListener {
+            try {
+                val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                    data = Uri.parse("package:$packageName")
+                }
+                startActivity(intent)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            dialog.dismiss()
+        }
+        
+        dialog.setView(view)
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
         dialog.show()
     }
 }

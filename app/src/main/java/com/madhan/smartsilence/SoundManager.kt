@@ -12,7 +12,11 @@ class SoundManager(private val context: Context) {
         AudioManager.STREAM_NOTIFICATION
     )
 
+    private val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+
     fun setSilentMode() {
+        if (!nm.isNotificationPolicyAccessGranted) return
+
         val isAlreadySilent = soundPrefs.getBoolean("is_silent_active", false)
         val editor = soundPrefs.edit()
 
@@ -38,6 +42,8 @@ class SoundManager(private val context: Context) {
     }
 
     fun setNormalMode() {
+        if (!nm.isNotificationPolicyAccessGranted) return
+
         audioManager.ringerMode = AudioManager.RINGER_MODE_NORMAL
 
         for (stream in affectedStreams) {
