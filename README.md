@@ -14,7 +14,7 @@ Smart Silence is an Android automation app that automatically silences notificat
 
 ## APK Download
 
-👉 [Download Latest APK](https://github.com/madhan929/smart-silence/releases/download/v5.3/smart-silence.apk)
+👉 [Download Latest APK](https://github.com/madhan929/smart-silence/releases/download/v5.4/app-release.apk)
 
 ---
 
