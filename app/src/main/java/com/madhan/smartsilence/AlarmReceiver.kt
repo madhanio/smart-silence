@@ -71,6 +71,14 @@ class AlarmReceiver : BroadcastReceiver() {
             return
         }
 
+        if (mode == "FOCUS_END") {
+            soundManager.setNormalMode()
+            automationPrefs.edit().putBoolean("manual_focus_active", false).apply()
+            Toast.makeText(context, "Focus Mode Ended", Toast.LENGTH_SHORT).show()
+            notifyMainActivity(context)
+            return
+        }
+
         val dayOfWeek = Calendar.getInstance().get(Calendar.DAY_OF_WEEK)
         val isWeekday = dayOfWeek in Calendar.MONDAY..Calendar.FRIDAY
 

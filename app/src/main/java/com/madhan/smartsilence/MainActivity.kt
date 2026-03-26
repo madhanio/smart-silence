@@ -42,6 +42,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var automationPrefs: SharedPreferences
     private var isProgrammaticChange = false
     private var lastStatusColor = Color.parseColor("#34C759")
+    private var colorAnimator: ValueAnimator? = null
 
     private lateinit var tvStartTime: TextView
     private lateinit var tvLunchStartTime: TextView
@@ -179,7 +180,6 @@ class MainActivity : AppCompatActivity() {
                 automationPrefs.edit().putBoolean("skipped_today", true).apply()
                 Toast.makeText(this, "Automation skipped for today", Toast.LENGTH_SHORT).show()
             }
-            updateStatusDisplay()
             loadAndDisplaySettings()
         }
 
@@ -190,7 +190,6 @@ class MainActivity : AppCompatActivity() {
                 automationPrefs.edit().putBoolean("manual_focus_active", false).apply()
                 scheduler.cancelAlarm(108) // Cancel focus end alarm
                 Toast.makeText(this, "Focus Mode Ended", Toast.LENGTH_SHORT).show()
-                updateStatusDisplay()
                 loadAndDisplaySettings()
             } else {
                 if (hasDNDPermission()) {
@@ -350,10 +349,9 @@ class MainActivity : AppCompatActivity() {
             .putInt("focus_end_minute", minute)
             .apply()
         
-        scheduler.scheduleAlarm(hour, minute, "NORMAL", 108)
+        scheduler.scheduleAlarm(hour, minute, "FOCUS_END", 108)
         
         Toast.makeText(this, "Focus Mode Started until ${formatTime(hour, minute)}", Toast.LENGTH_SHORT).show()
-        updateStatusDisplay()
         loadAndDisplaySettings()
     }
 
@@ -384,10 +382,9 @@ class MainActivity : AppCompatActivity() {
                 .putInt("focus_end_minute", minute)
                 .apply()
             
-            scheduler.scheduleAlarm(hour, minute, "NORMAL", 108)
+            scheduler.scheduleAlarm(hour, minute, "FOCUS_END", 108)
             
             Toast.makeText(this, "Focus Mode Started until ${formatTime(hour, minute)}", Toast.LENGTH_SHORT).show()
-            updateStatusDisplay()
             loadAndDisplaySettings()
             dialog.dismiss()
         }
@@ -609,18 +606,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun animateStatusUI(targetColor: Int) {
+        if (lastStatusColor == targetColor) return
+        colorAnimator?.cancel()
+        
         val colorAnim = ValueAnimator.ofObject(ArgbEvaluator(), lastStatusColor, targetColor)
-        colorAnim.duration = 300
+        colorAnim.duration = 500
         colorAnim.addUpdateListener { animator ->
             val color = animator.animatedValue as Int
             statusDot.backgroundTintList = ColorStateList.valueOf(color)
             (statusCard as? com.google.android.material.card.MaterialCardView)?.let {
                 it.strokeColor = color
-                // Apply a very subtle translucent version of the color to the background
-                // but keep it mostly iOS card background
             }
         }
         colorAnim.start()
+        colorAnimator = colorAnim
         lastStatusColor = targetColor
     }
 
