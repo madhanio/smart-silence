@@ -146,6 +146,7 @@ class AlarmReceiver : BroadcastReceiver() {
 
     private fun notifyMainActivity(context: Context) {
         val intent = Intent("com.madhan.clgautomation.UPDATE_STATUS")
+        intent.setPackage(context.packageName)
         context.sendBroadcast(intent)
     }
 

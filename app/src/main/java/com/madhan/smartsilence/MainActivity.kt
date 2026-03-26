@@ -283,6 +283,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun refreshUIState() {
+        val focusActive = automationPrefs.getBoolean("manual_focus_active", false)
+        if (focusActive) {
+            val focusEndTime = automationPrefs.getLong("focus_end_time", 0L)
+            if (focusEndTime > 0 && System.currentTimeMillis() >= focusEndTime) {
+                automationPrefs.edit().putBoolean("manual_focus_active", false).apply()
+            }
+        }
+
         isProgrammaticChange = true
         automationSwitch.isChecked = appSettings.getBoolean("automation_enabled", false)
         isProgrammaticChange = false
@@ -347,6 +355,7 @@ class MainActivity : AppCompatActivity() {
             .putBoolean("manual_focus_active", true)
             .putInt("focus_end_hour", hour)
             .putInt("focus_end_minute", minute)
+            .putLong("focus_end_time", now.timeInMillis)
             .apply()
         
         scheduler.scheduleAlarm(hour, minute, "FOCUS_END", 108)
@@ -375,11 +384,22 @@ class MainActivity : AppCompatActivity() {
             val hour = timePicker.hour
             val minute = timePicker.minute
             
+            val endCalendar = Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, hour)
+                set(Calendar.MINUTE, minute)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+                if (before(Calendar.getInstance())) {
+                    add(Calendar.DATE, 1)
+                }
+            }
+            
             soundManager.setSilentMode()
             automationPrefs.edit()
                 .putBoolean("manual_focus_active", true)
                 .putInt("focus_end_hour", hour)
                 .putInt("focus_end_minute", minute)
+                .putLong("focus_end_time", endCalendar.timeInMillis)
                 .apply()
             
             scheduler.scheduleAlarm(hour, minute, "FOCUS_END", 108)
