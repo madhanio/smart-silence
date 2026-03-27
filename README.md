@@ -105,7 +105,7 @@ Morning Check
 - Fixed a state conflict where Skip Today was incorrectly disabling future automation cycles instead of only the current day.
 
 ### v3.0 — Morning Confirmation System
-- Added morning confirmation notification at 8:30 AM to check college attendance.
+- Added morning confirmation notification 30mins before the automation schedule starts, to check college attendance.
 - Added follow-up notification for cases where the first prompt is ignored.
 - Added internal debug tools for manually triggering silence mode, normal mode, and notifications during development and testing.
 
