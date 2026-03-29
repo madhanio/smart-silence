@@ -1,6 +1,6 @@
 # Smart Silence
 
-> An Android automation utility app that silences your phone during class — automatically. random
+> An Android automation utility app that silences your phone during class — automatically. 
 
 ---
 
